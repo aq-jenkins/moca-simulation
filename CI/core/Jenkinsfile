@@ -116,7 +116,7 @@ pipeline {
       }
        steps {
         build(
-          job: 'Production/Deploy-Production', 
+          job: 'Production/deploy-production', 
           parameters: [
             string(name: 'SERVICE', value: "${SERVICE}"), 
             string(name: 'IMAGE_TAG', value: "${IMAGE_TAG}"),
@@ -141,7 +141,7 @@ pipeline {
            input(message: 'CONTINUE TO DEPLOY PRODUCTION?')
         }
         build(
-          job: 'Production/Deploy-Production', 
+          job: 'Production/deploy-production', 
           parameters: [
             string(name: 'SERVICE', value: "${SERVICE}"), 
             string(name: 'IMAGE_TAG', value: "${IMAGE_TAG}"),
