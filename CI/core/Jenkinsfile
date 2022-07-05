@@ -59,6 +59,7 @@ pipeline {
         script {
           currentBuild.result      = 'SUCCESS'
           currentBuild.description = "REFRESHED Jenkinsfile "
+          return
         }     
       }
     }
