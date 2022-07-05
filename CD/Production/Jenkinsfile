@@ -1,0 +1,117 @@
+@Library('shared-libraries@main') _
+
+pipeline {
+  environment {
+    AWS_ASSUME_ROLE_NAME = "eks-admin"
+    CHART_URL            = "s3://helm-release/production/"
+    CHART_BASE_NAME      = "moca-chart-production"
+    CHART_VERSION        = "0.1.0"
+  }
+
+  agent {
+    kubernetes {
+      label "Jenkins-${env.JOB_NAME}"
+      yaml libraryResource('pod_templates/kubernetesPodBuild.yaml')
+    }
+  }
+
+  stages {
+    /** BEGIN -- Setup Parameters **/
+    stage('Setup Parameters') {
+      steps {
+        script { 
+          properties([
+            parameters([
+              string(
+                name: 'SERVICE', 
+                description: 'Name of the service to be deployed', 
+                trim: true
+              ),
+              string(
+                name: 'IMAGE_TAG', 
+                description: 'Service image with appropriate tag', 
+                trim: true
+              ),
+              string(
+                name: 'CHART_VERSION', 
+                description: 'Version of the chart to be deployed', 
+                defaultValue: '0.1.0'
+                trim: true
+              ),
+              choice(
+                name: 'DEPLOY_ENV'
+                choices: ['pilot', 'production'], 
+                description: 'Environment to deploy the service to', 
+              ),
+              string(
+                name: 'DEPLOY_ARGS', 
+                description: 'Extra arguments for the Helm deployment command', 
+                defaultValue: ''
+                trim: true
+              ),
+              booleanParam(
+                defaultValue: false, 
+                description: 'Refresh Jenkinsfile to update parameters', 
+                name: 'REFRESH'
+              ),
+            ])
+          ])
+        }
+      }
+    }
+    /** END -- Setup Parameters **/
+
+    /** BEGIN -- ReadJenkinsfile **/
+    stage('Read Jenkinsfile') {
+      when {
+        environment name: 'REFRESH', value: 'true'
+      }
+      steps {
+        echo("Ended pipeline early.")
+        script {
+          currentBuild.description = "REFRESHED Jenkinsfile "
+        }     
+      }
+    }
+    /** END -- ReadJenkinsfile **/
+
+    /** BEGIN -- Deploy to Pilot **/
+    stage('Get environment required settings') {
+      steps {
+        script {
+          if (${DEPLOY_ENV} == 'pilot') {
+            env.AWS_ACCOUNT_ID = "1111111"
+          } else if (${DEPLOY_ENV} == 'production') {
+            env.AWS_ACCOUNT_ID = "222222"
+          }
+
+          env.CLUSTER_NAME = "cluster-${DEPLOY_ENV}"
+        }
+      }
+    }
+
+    /** BEGIN -- Deploy to Pilot **/
+    stage('Dry-run before deploy') {
+      steps {
+        echo "aws sts assume-role --role-arn arn:aws:iam::${AWS_ACCOUNT_ID}:role/${AWS_ASSUME_ROLE_NAME} --role-session-name AWSCLI-Session"
+        echo "aws eks --region ap-southeast-1 update-kubeconfig --name ${CLUSTER_NAME}"
+        echo "helm repo add ${CHART_BASE_NAME} ${CHART_URL}"
+        echo "helm repo update"
+        echo "helm upgrade --install --dry-run --wait ${SERVICE} ${CHART_BASE_NAME}/${SERVICE} --set image.tag=${IMAGE_TAG} ${DEPLOY_ARGS} --version ${CHART_VERSION} --namespace ${NAMESPACE} --create-namespace"
+      }
+    }
+    /** END -- Deploy to Pilot **/
+
+    /** BEGIN -- Deploy to Production **/
+    stage('Deploy') {
+      steps {
+        echo "aws sts assume-role --role-arn arn:aws:iam::${AWS_ACCOUNT_ID}:role/${AWS_ASSUME_ROLE_NAME} --role-session-name AWSCLI-Session"
+        echo "aws eks --region ap-southeast-1 update-kubeconfig --name ${CLUSTER_NAME}"
+        echo "helm repo add ${CHART_BASE_NAME} ${CHART_URL}"
+        echo "helm repo update"
+        echo "helm upgrade --install --wait ${SERVICE} ${CHART_BASE_NAME}/${SERVICE} --set image.tag=${IMAGE_TAG} ${DEPLOY_ARGS} --version ${CHART_VERSION} --namespace ${NAMESPACE} --create-namespace"
+    }
+    /** END -- Deploy to Production **/
+
+  }
+}

@@ -2,9 +2,10 @@
 
 pipeline {
   environment {
-    APP                 = "${JOB_BASE_NAME}"
-    GIT_URL             = "git@gitlab.com:moca.vn/backend/core.git"
-    IMAGE               = "${ACR_LOGIN_SERVER}/${APP}"
+    SERVICE                = "${JOB_BASE_NAME}"
+    GIT_URL                = "git@gitlab.com:moca.vn/backend/core.git"
+    DOCKER_REGISTRY_SERVER = "083849277817.dkr.ecr.ap-southeast-1.amazonaws.com"
+    IMAGE                  = "${DOCKER_REGISTRY_SERVER}/${SERVICE}"
   }
 
   agent {
@@ -38,7 +39,7 @@ pipeline {
               ),
               booleanParam(
                 defaultValue: false, 
-                description: 'Refresh Jenkinsfile', 
+                description: 'Refresh Jenkinsfile to update parameters', 
                 name: 'REFRESH'
               ),
             ])
@@ -65,7 +66,12 @@ pipeline {
     /** BEGIN -- Checkout Code **/
     stage("Checkout Code") {
       steps {
-        echo "Checkout Code"
+        echo "Checkout Code for service ${SERVICE}"
+        script {
+          env.COMMIT = "84888c4"
+          env.IMAGE_TAG = "${IMAGE}:${BRANCH}-${TAG}"
+          env.IMAGE_TAG_LT = "${IMAGE}:latest"
+        }
       }
     }
     /** END -- Checkout Code **/
@@ -74,7 +80,7 @@ pipeline {
     stage('Build Source') {
       steps {
         container("grails2") {
-          echo "Build Source"
+          echo "Build Source for service ${SERVICE}"
         }
       }
     }
@@ -85,7 +91,8 @@ pipeline {
     stage('Docker Build') {
       steps {
         container('docker') {
-          echo "Docker Build"
+          echo "Docker build for image with tag ${IMAGE_TAG}"
+          echo "Docker build for image with tag ${IMAGE_TAG_LT}"
         }
       }
     }
@@ -95,7 +102,8 @@ pipeline {
     stage('Upload Image') {
       steps {
         container('docker') {
-          echo "Upload Image"
+          echo "Upload image with tag ${IMAGE_TAG}"
+          echo "Upload image with tag ${IMAGE_TAG_LT}"
         }
       }
     }
@@ -107,7 +115,15 @@ pipeline {
         environment name: 'DEPLOY_PILOT', value: 'true'
       }
        steps {
-        echo "Deploy to Pilot"
+        build(
+          job: 'Production/Deploy-Production', 
+          parameters: [
+            string(name: 'SERVICE', value: "${SERVICE}"), 
+            string(name: 'IMAGE_TAG', value: "${IMAGE_TAG}"),
+            string(name: 'CHART_VERSION', value: "0.1.0"),
+            string(name: 'DEPLOY_ENV', value: "pilot")
+          ]
+        )
       }
     }
     /** END -- Deploy to Pilot **/
@@ -124,7 +140,15 @@ pipeline {
         script {
            input(message: 'CONTINUE TO DEPLOY PRODUCTION?')
         }
-        echo "Deploy to Production"
+        build(
+          job: 'Production/Deploy-Production', 
+          parameters: [
+            string(name: 'SERVICE', value: "${SERVICE}"), 
+            string(name: 'IMAGE_TAG', value: "${IMAGE_TAG}"),
+            string(name: 'CHART_VERSION', value: "0.1.0"),
+            string(name: 'DEPLOY_ENV', value: "production")
+          ]
+        )
       }
     }
     /** END -- Deploy to Production **/
