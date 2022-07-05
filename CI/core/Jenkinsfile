@@ -57,9 +57,7 @@ pipeline {
       steps {
         echo("Ended pipeline early.")
         script {
-          currentBuild.result      = 'SUCCESS'
           currentBuild.description = "REFRESHED Jenkinsfile "
-          return
         }     
       }
     }
