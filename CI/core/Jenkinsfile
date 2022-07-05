@@ -1,3 +1,5 @@
+@Library('shared-libraries@main') _
+
 pipeline {
   environment {
     APP                 = "${JOB_BASE_NAME}"
