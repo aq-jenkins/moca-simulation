@@ -72,17 +72,19 @@ pipeline {
       steps {
         echo("Ended pipeline early.")
         script {
+          currentBuild.result      = 'SUCCESS'
           currentBuild.description = "REFRESHED Jenkinsfile "
-        }     
+          return
+        }      
       }
     }
     /** END -- ReadJenkinsfile **/
 
     /** BEGIN -- Deploy to Pilot **/
     stage('Get environment required settings') {
-      when {
-        environment name: 'REFRESH', value: 'false'
-      }
+      // when {
+      //   environment name: 'REFRESH', value: 'false'
+      // }
       steps {
         script {
           if (env.DEPLOY_ENV == 'pilot') {
@@ -98,9 +100,9 @@ pipeline {
 
     /** BEGIN -- Deploy to Pilot **/
     stage('Dry-run before deploy') {
-      when {
-        environment name: 'REFRESH', value: 'false'
-      }
+      // when {
+      //   environment name: 'REFRESH', value: 'false'
+      // }
       steps {
         echo "aws sts assume-role --role-arn arn:aws:iam::${AWS_ACCOUNT_ID}:role/${AWS_ASSUME_ROLE_NAME} --role-session-name AWSCLI-Session"
         echo "aws eks --region ap-southeast-1 update-kubeconfig --name ${CLUSTER_NAME}"
@@ -113,9 +115,9 @@ pipeline {
 
     /** BEGIN -- Deploy to Production **/
     stage('Deploy') {
-      when {
-        environment name: 'REFRESH', value: 'false'
-      }
+      // when {
+      //   environment name: 'REFRESH', value: 'false'
+      // }
       steps {
         echo "aws sts assume-role --role-arn arn:aws:iam::${AWS_ACCOUNT_ID}:role/${AWS_ASSUME_ROLE_NAME} --role-session-name AWSCLI-Session"
         echo "aws eks --region ap-southeast-1 update-kubeconfig --name ${CLUSTER_NAME}"
