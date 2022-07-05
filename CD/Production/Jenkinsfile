@@ -78,9 +78,9 @@ pipeline {
     stage('Get environment required settings') {
       steps {
         script {
-          if (${DEPLOY_ENV} == 'pilot') {
+          if (env.DEPLOY_ENV == 'pilot') {
             env.AWS_ACCOUNT_ID = "1111111"
-          } else if (${DEPLOY_ENV} == 'production') {
+          } else if (env.DEPLOY_ENV == 'production') {
             env.AWS_ACCOUNT_ID = "222222"
           }
 
