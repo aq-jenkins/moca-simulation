@@ -109,8 +109,7 @@ pipeline {
         echo "helm repo add ${CHART_BASE_NAME} ${CHART_URL}"
         echo "helm repo update"
         echo "helm upgrade --install --wait ${SERVICE} ${CHART_BASE_NAME}/${SERVICE} --set image.tag=${IMAGE_TAG} ${DEPLOY_ARGS} --version ${CHART_VERSION} --namespace ${NAMESPACE} --create-namespace"
+      }
     }
-    /** END -- Deploy to Production **/
-
   }
 }
