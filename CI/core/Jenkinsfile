@@ -67,6 +67,9 @@ pipeline {
 
     /** BEGIN -- Checkout Code **/
     stage("Checkout Code") {
+      when {
+        environment name: 'REFRESH', value: 'false'
+      }
       steps {
         echo "Checkout Code for service ${SERVICE}"
         script {
@@ -80,6 +83,9 @@ pipeline {
 
     /** BEGIN -- Build source **/
     stage('Build Source') {
+      when {
+        environment name: 'REFRESH', value: 'false'
+      }
       steps {
         container("grails2") {
           echo "Build Source for service ${SERVICE}"
@@ -91,6 +97,9 @@ pipeline {
 
     /** BEGIN -- Docker build **/
     stage('Docker Build') {
+      when {
+        environment name: 'REFRESH', value: 'false'
+      }
       steps {
         container('docker') {
           echo "Docker build for image with tag ${IMAGE_TAG}"
@@ -102,6 +111,9 @@ pipeline {
 
     /** BEGIN -- Upload Image to ACR **/
     stage('Upload Image') {
+      when {
+        environment name: 'REFRESH', value: 'false'
+      }
       steps {
         container('docker') {
           echo "Upload image with tag ${IMAGE_TAG}"
@@ -114,7 +126,10 @@ pipeline {
     /** BEGIN -- Deploy to Pilot **/
     stage('Deploy to Pilot') {
       when {
-        environment name: 'DEPLOY_PILOT', value: 'true'
+        allOf {
+          environment name: 'DEPLOY_PILOT', value: 'true'
+          environment name: 'REFRESH', value: 'false'
+        }
       }
        steps {
         build(
@@ -133,7 +148,10 @@ pipeline {
     /** BEGIN -- Deploy to Production **/
     stage('Deploy to Production') {
       when {
-        environment name: 'DEPLOY_PROD', value: 'true'
+        allOf {
+          environment name: 'DEPLOY_PILOT', value: 'true'
+          environment name: 'REFRESH', value: 'false'
+        }
       }
       options {
         timeout(time: 1, unit: 'HOURS') 
