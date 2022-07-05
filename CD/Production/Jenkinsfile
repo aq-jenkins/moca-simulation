@@ -46,7 +46,6 @@ pipeline {
               string(
                 name: 'DEPLOY_ARGS', 
                 description: 'Extra arguments for the Helm deployment command', 
-                defaultValue: ''
                 trim: true
               ),
               booleanParam(
