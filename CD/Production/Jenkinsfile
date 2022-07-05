@@ -23,10 +23,13 @@ pipeline {
         script { 
           properties([
             parameters([
-              string(
-                name: 'SERVICE', 
+              choice( 
+                name: 'SERVICE',
                 description: 'Name of the service to be deployed', 
-                trim: true
+                choices: ['airtime', 'paygate', 'core', 'mof', 'card-syncer', 'moca-consumer', 'producer', 'unipay', \
+                          'facade-proxy', 'ops-portal', 'ops-app', 'ops-service', 'data-mining', 'report-app','report-service', 'report-scheduler', \
+                          'my-moca', 'mc', 'bank-portal', 'crm', 'payout', 'payout-portal', 'user-app', 'user-service', \
+                          'job-center', 'otp-service', 'corex', 'bulk-importer', 'config-management', 'config-management-ui', 'moca-dax', 'moca-dax-portal', 'moca-core', 'moca-risk']
               ),
               string(
                 name: 'IMAGE_TAG', 

@@ -23,9 +23,9 @@ pipeline {
           properties([
             parameters([
               choice(
+                name: 'BRANCH',
                 choices: ['master'], 
-                description: 'Branch of the service to build', 
-                name: 'BRANCH'
+                description: 'Branch of the service to build'
               ),
               booleanParam(
                 defaultValue: false, 
