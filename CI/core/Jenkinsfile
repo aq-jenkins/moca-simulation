@@ -10,7 +10,7 @@ pipeline {
   agent {
     kubernetes {
       label "Jenkins-${env.JOB_NAME}"
-      yaml libraryResource('pod_templates/kubernetesPod.yaml')
+      yaml libraryResource('pod_templates/kubernetesPodBuild.yaml')
     }
   }
 
