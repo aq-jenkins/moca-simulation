@@ -69,7 +69,7 @@ pipeline {
         echo "Checkout Code for service ${SERVICE}"
         script {
           env.COMMIT = "84888c4"
-          env.IMAGE_TAG = "${IMAGE}:${BRANCH}-${TAG}"
+          env.IMAGE_TAG = "${IMAGE}:${BRANCH}-${COMMIT}"
           env.IMAGE_TAG_LT = "${IMAGE}:latest"
         }
       }
