@@ -21,34 +21,19 @@ pipeline {
         script { 
           properties([
             parameters([
-              string(
-                defaultValue: 'migration_aks', 
-                name: 'BRANCH', 
-                trim: true
-              ),
-              string(
-                defaultValue: 'latest', 
-                name: 'IMAGE_DEPLOY_TAG', 
-                trim: true
-              ),
-              booleanParam(
-                defaultValue: true, 
-                description: 'Toggle this value to BUILD only', 
-                name: 'BUILD'
+              choice(
+                choices: ['master'], 
+                description: 'Branch of the service to build', 
+                name: 'BRANCH'
               ),
               booleanParam(
                 defaultValue: false, 
-                description: 'Toggle this value to deploy PILOT only', 
+                description: 'Toggle this value to deploy PILOT', 
                 name: 'DEPLOY_PILOT'
               ),
-              string(
-                  defaultValue: '1', 
-                  description: 'Number of replica when deploy to PILOT', 
-                  name: 'PILOT_REPLICA'
-              ),
               booleanParam(
                 defaultValue: false, 
-                description: 'Toggle this value to deploy PROD only', 
+                description: 'Toggle this value to deploy PROD', 
                 name: 'DEPLOY_PROD'
               ),
               booleanParam(
@@ -79,9 +64,6 @@ pipeline {
 
     /** BEGIN -- Checkout Code **/
     stage("Checkout Code") {
-      when {
-        environment name: 'BUILD', value: 'true'
-      }
       steps {
         echo "Checkout Code"
       }
@@ -90,9 +72,6 @@ pipeline {
 
     /** BEGIN -- Build source **/
     stage('Build Source') {
-      when {
-        environment name: 'BUILD', value: 'true'
-      }
       steps {
         container("grails2") {
           echo "Build Source"
@@ -104,9 +83,6 @@ pipeline {
 
     /** BEGIN -- Docker build **/
     stage('Docker Build') {
-      when {
-        environment name: 'BUILD', value: 'true'
-      }
       steps {
         container('docker') {
           echo "Docker Build"
@@ -117,9 +93,6 @@ pipeline {
 
     /** BEGIN -- Upload Image to ACR **/
     stage('Upload Image') {
-      when {
-        environment name: 'BUILD', value: 'true'
-      }
       steps {
         container('docker') {
           echo "Upload Image"
