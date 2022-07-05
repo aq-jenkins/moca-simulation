@@ -6,6 +6,7 @@ pipeline {
     CHART_URL            = "s3://helm-release/production/"
     CHART_BASE_NAME      = "moca-chart-production"
     CHART_VERSION        = "0.1.0"
+    NAMESPACE            = "moca-services"
   }
 
   agent {
