@@ -1,0 +1,158 @@
+pipeline {
+  environment {
+    APP                 = "${JOB_BASE_NAME}"
+    GIT_URL             = "git@gitlab.com:moca.vn/backend/core.git"
+    IMAGE               = "${ACR_LOGIN_SERVER}/${APP}"
+  }
+
+  agent {
+    kubernetes {
+      label "Jenkins-${env.JOB_NAME}"
+      yaml libraryResource('pod_templates/kubernetesPod.yaml')
+    }
+  }
+
+  stages {
+    /** BEGIN -- Setup Parameters **/
+    stage('Setup Parameters') {
+      steps {
+        script { 
+          properties([
+            parameters([
+              string(
+                defaultValue: 'migration_aks', 
+                name: 'BRANCH', 
+                trim: true
+              ),
+              string(
+                defaultValue: 'latest', 
+                name: 'IMAGE_DEPLOY_TAG', 
+                trim: true
+              ),
+              booleanParam(
+                defaultValue: true, 
+                description: 'Toggle this value to BUILD only', 
+                name: 'BUILD'
+              ),
+              booleanParam(
+                defaultValue: false, 
+                description: 'Toggle this value to deploy PILOT only', 
+                name: 'DEPLOY_PILOT'
+              ),
+              string(
+                  defaultValue: '1', 
+                  description: 'Number of replica when deploy to PILOT', 
+                  name: 'PILOT_REPLICA'
+              ),
+              booleanParam(
+                defaultValue: false, 
+                description: 'Toggle this value to deploy PROD only', 
+                name: 'DEPLOY_PROD'
+              ),
+              booleanParam(
+                defaultValue: false, 
+                description: 'Refresh Jenkinsfile', 
+                name: 'REFRESH'
+              ),
+            ])
+          ])
+        }
+      }
+    }
+    /** END -- Setup Parameters **/
+
+    /** BEGIN -- ReadJenkinsfile **/
+    stage('Read Jenkinsfile') {
+      when {
+        environment name: 'REFRESH', value: 'true'
+      }
+      steps {
+        echo("Ended pipeline early.")
+        script {
+          currentBuild.description = "REFRESHED Jenkinsfile "
+        }     
+      }
+    }
+    /** END -- ReadJenkinsfile **/
+
+    /** BEGIN -- Checkout Code **/
+    stage("Checkout Code") {
+      when {
+        environment name: 'BUILD', value: 'true'
+      }
+      steps {
+        echo "Checkout Code"
+      }
+    }
+    /** END -- Checkout Code **/
+
+    /** BEGIN -- Build source **/
+    stage('Build Source') {
+      when {
+        environment name: 'BUILD', value: 'true'
+      }
+      steps {
+        container("grails2") {
+          echo "Build Source"
+        }
+      }
+    }
+    /** END -- Build source **/
+
+
+    /** BEGIN -- Docker build **/
+    stage('Docker Build') {
+      when {
+        environment name: 'BUILD', value: 'true'
+      }
+      steps {
+        container('docker') {
+          echo "Docker Build"
+        }
+      }
+    }
+    /** END -- Docker build **/
+
+    /** BEGIN -- Upload Image to ACR **/
+    stage('Upload Image') {
+      when {
+        environment name: 'BUILD', value: 'true'
+      }
+      steps {
+        container('docker') {
+          echo "Upload Image"
+        }
+      }
+    }
+    /** END -- Upload Image to ACR **/
+
+    /** BEGIN -- Deploy to Pilot **/
+    stage('Deploy to Pilot') {
+      when {
+        environment name: 'DEPLOY_PILOT', value: 'true'
+      }
+       steps {
+        echo "Deploy to Pilot"
+      }
+    }
+    /** END -- Deploy to Pilot **/
+
+    /** BEGIN -- Deploy to Production **/
+    stage('Deploy to Production') {
+      when {
+        environment name: 'DEPLOY_PROD', value: 'true'
+      }
+      options {
+        timeout(time: 1, unit: 'HOURS') 
+      }
+       steps {
+        script {
+           input(message: 'CONTINUE TO DEPLOY PRODUCTION?')
+        }
+        echo "Deploy to Production"
+      }
+    }
+    /** END -- Deploy to Production **/
+
+  }
+}
