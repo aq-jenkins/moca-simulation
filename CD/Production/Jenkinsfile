@@ -35,11 +35,11 @@ pipeline {
               string(
                 name: 'CHART_VERSION', 
                 description: 'Version of the chart to be deployed', 
-                defaultValue: '0.1.0'
+                defaultValue: '0.1.0',
                 trim: true
               ),
               choice(
-                name: 'DEPLOY_ENV'
+                name: 'DEPLOY_ENV',
                 choices: ['pilot', 'production'], 
                 description: 'Environment to deploy the service to', 
               ),
