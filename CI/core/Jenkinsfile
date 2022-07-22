@@ -15,6 +15,21 @@ pipeline {
     }
   }
 
+  triggers {
+    GenericTrigger causeString: 'Generic Cause', 
+      genericRequestVariables: [
+        [key: 'DEPLOY_PILOT', regexpFilter: ''], 
+        [key: 'DEPLOY_PROD', regexpFilter: '']
+      ], 
+      genericVariables: [
+        [defaultValue: '', key: 'ref', regexpFilter: '', value: '$.ref']
+      ], 
+      regexpFilterExpression: '^(refs/heads/main)$', 
+      regexpFilterText: '$ref', 
+      token: 'core', 
+      tokenCredentialId: ''
+  }
+
   stages {
     /** BEGIN -- Setup Parameters **/
     stage('Setup Parameters') {
