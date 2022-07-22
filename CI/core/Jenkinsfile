@@ -20,8 +20,8 @@ pipeline {
       genericVariables: [
         [ key: 'ref', value: '\$.ref'],
         [ key: 'pusher_name', value: '\$.pusher.name'],
-        [ key: 'clone_url', value: '\$.clone_url'],
-        [ key: 'commits', value: '\$.commits[0].id'],
+        [ key: 'clone_url', value: '\$.repository.clone_url'],
+        [ key: 'commit', value: '\$.commits[0].id'],
       ],
       genericRequestVariables: [
         [key: 'DEPLOY_PILOT'], 
