@@ -162,7 +162,7 @@ pipeline {
     stage('Deploy to Production') {
       when {
         allOf {
-          environment name: 'DEPLOY_PILOT', value: 'true'
+          environment name: 'DEPLOY_PROD', value: 'true'
           environment name: 'REFRESH', value: 'false'
         }
       }
