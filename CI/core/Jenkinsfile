@@ -16,18 +16,36 @@ pipeline {
   }
 
   triggers {
-    GenericTrigger causeString: 'Generic Cause', 
+    GenericTrigger (
+      genericVariables: [
+        [ key: 'ref', value: '\$ref'],
+        [ key: "POST_actor_name", value: "\$.actor.name" ],
+        [ key: "POST_actor_email", value: "\$.actor.emailAddress" ],
+        [ key: "POST_ref_id", value: "\$.changes[0].refId" ],
+        [ key: "POST_ref_display_id", value: "\$.changes[0].ref.displayId" ],
+        [ key: "POST_commit", value: "\$.changes[0].toHash" ],
+        [ key: "POST_repo_slug", value: "\$.repository.slug" ],
+        [ key: "POST_project_key", value: "\$.repository.project.key" ],
+        [ key: "POST_clone_url", value: "\$.repository.links.clone[1].href" ],
+        [ key: "POST_pull_req_clone_url", value: "\$.pullRequest.fromRef.repository.links.clone[1].href" ],
+        [ key: "POST_pull_req_id", value: "\$.pullRequest.id" ],
+        [ key: "POST_pull_req_from_branch", value: "\$.pullRequest.fromRef.displayId" ],
+        [ key: "POST_pull_req_to_branch", value: "\$.pullRequest.toRef.displayId" ],
+        [ key: "POST_pull_req_repo_slug", value: "\$.pullRequest.toRef.repository.slug" ],
+        [ key: "POST_pull_req", value: "\$.pullRequest.links.self[0].href" ],
+        [ key: "POST_pull_req_url", value: "\$.pullRequest.links.self[0].href" ],
+      ],
       genericRequestVariables: [
         [key: 'DEPLOY_PILOT', regexpFilter: ''], 
         [key: 'DEPLOY_PROD', regexpFilter: '']
       ], 
-      genericVariables: [
-        [defaultValue: '', key: 'ref', regexpFilter: '', value: '$.ref']
-      ], 
+      causeString: '$committer_name pushed ref $ref to $clone_url referencing $commit',
       regexpFilterExpression: '^(refs/heads/main)$', 
       regexpFilterText: '$ref', 
       token: 'core', 
-      tokenCredentialId: ''
+      printContributedVariables: true,
+      printPostContent: true,
+    )
   }
 
   stages {
