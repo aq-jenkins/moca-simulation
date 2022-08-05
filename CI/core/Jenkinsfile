@@ -4,7 +4,7 @@ pipeline {
   environment {
     SERVICE                = "${JOB_BASE_NAME}"
     GIT_URL                = "git@gitlab.com:moca.vn/backend/core.git"
-    DOCKER_REGISTRY_SERVER = "083849277817.dkr.ecr.ap-southeast-1.amazonaws.com"
+    DOCKER_REGISTRY_SERVER = "253427922730.dkr.ecr.us-east-1.amazonaws.com"
     IMAGE                  = "${DOCKER_REGISTRY_SERVER}/${SERVICE}"
   }
 
@@ -91,14 +91,34 @@ pipeline {
       }
       steps {
         echo "Checkout Code for service ${SERVICE}"
+        git url: "${env.GIT_URL}",
+        branch: "${env.BRANCH}",
+        credentialsId: 'gitlab-ssh-key'
         script {
-          env.COMMIT = "84888c4"
+          env.COMMIT = sh(script: 'git log -1 --pretty=%h', returnStdout: true).trim()
           env.IMAGE_TAG = "${IMAGE}:${BRANCH}-${COMMIT}"
           env.IMAGE_TAG_LT = "${IMAGE}:latest"
         }
       }
     }
     /** END -- Checkout Code **/
+
+    /** BEGIN -- Replace content **/
+    stage('Replace content') {
+      when {
+        environment name: 'BUILD', value: 'true'
+      }
+      steps {
+        sh "sed -i 's,https://moca.vn/moca,https://moca.vn/moca,g' apps/moca-core/grails-app/conf/Config.groovy"
+        sh "sed -i 's,http://localhost:8080/moca,https://moca.vn/moca,g' apps/moca-core/grails-app/conf/Config.groovy"
+        sh "sed -i 's,http://d01.moca.vn/moca,https://moca.vn/moca,g' apps/moca-core/grails-app/conf/Config.groovy"
+        // sh "sed -i 's,https://moca.vn/moca,https://hht-dev01.moca.vn/moca,g' apps/moca-core/grails-app/conf/Config.groovy"
+        // sh "sed -i 's,http://localhost:8080/moca,https://hht-dev01.moca.vn/moca,g' apps/moca-core/grails-app/conf/Config.groovy"
+        // sh "sed -i 's,http://d01.moca.vn/moca,https://hht-dev01.moca.vn/moca,g' apps/moca-core/grails-app/conf/Config.groovy"
+        // sh "cat apps/moca-core/grails-app/conf/Config.groovy"
+      }
+    }
+    /** END -- "Replace content **/
 
     /** BEGIN -- Build source **/
     stage('Build Source') {
@@ -108,6 +128,11 @@ pipeline {
       steps {
         container("grails2") {
           echo "Build Source for service ${SERVICE}"
+          dir("$workspace/apps/moca-core") {
+            sh("grails clean")
+            sh("grails compile")
+            sh("grails war")
+          }          
         }
       }
     }
@@ -121,8 +146,10 @@ pipeline {
       }
       steps {
         container('docker') {
-          echo "Docker build for image with tag ${IMAGE_TAG}"
-          echo "Docker build for image with tag ${IMAGE_TAG_LT}"
+          echo "Docker build for image with tag ${IMAGE_TAG} and ${IMAGE_TAG_LT}"
+          dir("$workspace/apps/moca-core") {  
+            sh("docker build -t ${env.IMAGE_TAG} -t ${IMAGE_TAG_LT} .")
+          }
         }
       }
     }
@@ -136,7 +163,11 @@ pipeline {
       steps {
         container('docker') {
           echo "Upload image with tag ${IMAGE_TAG}"
-          echo "Upload image with tag ${IMAGE_TAG_LT}"
+          withAWS(credentials:'aws-credential', region: "us-east-1") {
+            sh "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${DOCKER_REGISTRY_SERVER}"
+            sh "docker push ${IMAGE_TAG}"
+            sh "docker push ${IMAGE_TAG_LT}"
+          }
         }
       }
     }
