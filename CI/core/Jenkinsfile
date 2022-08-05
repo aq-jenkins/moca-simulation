@@ -106,7 +106,7 @@ pipeline {
     /** BEGIN -- Replace content **/
     stage('Replace content') {
       when {
-        environment name: 'BUILD', value: 'true'
+        environment name: 'REFRESH', value: 'false'
       }
       steps {
         sh "sed -i 's,https://moca.vn/moca,https://moca.vn/moca,g' apps/moca-core/grails-app/conf/Config.groovy"
