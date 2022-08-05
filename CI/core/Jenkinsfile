@@ -161,13 +161,18 @@ pipeline {
         environment name: 'REFRESH', value: 'false'
       }
       steps {
-        container('docker') {
+        container('aws-cli') {
           echo "Upload image with tag ${IMAGE_TAG}"
           withAWS(credentials:'aws-credential', region: "us-east-1") {
-            sh "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${DOCKER_REGISTRY_SERVER}"
-            sh "docker push ${IMAGE_TAG}"
-            sh "docker push ${IMAGE_TAG_LT}"
+            script {
+              env.ECR_TOKEN = sh(script: 'aws ecr get-login-password --region us-east-1', returnStdout: true)
+            }
           }
+        }
+        container('docker') {
+          sh "docker login --username AWS --password ${ECR_TOKEN}"
+          sh "docker push ${IMAGE_TAG}"
+          sh "docker push ${IMAGE_TAG_LT}"
         }
       }
     }
